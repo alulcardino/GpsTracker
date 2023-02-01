@@ -6,24 +6,26 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.romanmikhailenko.gpstracker.R
-import com.romanmikhailenko.gpstracker.databinding.FragmentSettingsBinding
+import com.romanmikhailenko.gpstracker.databinding.FragmentTracksBinding
 import com.romanmikhailenko.gpstracker.databinding.FragmentViewTrackBinding
 
+class TracksFragment : Fragment() {
+    private lateinit var binding: FragmentTracksBinding
 
-class ViewTrackFragment : Fragment() {
 
-    private lateinit var binding: FragmentViewTrackBinding
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentViewTrackBinding.inflate(inflater, container, false)
+        // Inflate the layout for this fragment
+        binding = FragmentTracksBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     companion object {
         fun newInstance() =
-            ViewTrackFragment()
+            TracksFragment()
     }
+
 
 }
