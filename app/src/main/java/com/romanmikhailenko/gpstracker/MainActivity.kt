@@ -1,9 +1,7 @@
 package com.romanmikhailenko.gpstracker
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import com.romanmikhailenko.gpstracker.databinding.ActivityMainBinding
 import com.romanmikhailenko.gpstracker.fragments.MainFragment
 import com.romanmikhailenko.gpstracker.fragments.SettingsFragment
@@ -25,7 +23,7 @@ class MainActivity : AppCompatActivity() {
             when(it.itemId){
                 R.id.id_home -> openFragment(MainFragment.newInstance())
                 R.id.id_tracks -> openFragment(TracksFragment.newInstance())
-                R.id.id_settings -> openFragment(SettingsFragment.newInstance())
+                R.id.id_settings -> openFragment(SettingsFragment())
             }
             true
         }
