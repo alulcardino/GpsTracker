@@ -1,6 +1,9 @@
 package com.romanmikhailenko.gpstracker.utils
 
+import android.content.Context
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.romanmikhailenko.gpstracker.R
 
@@ -17,4 +20,11 @@ fun AppCompatActivity.openFragment(fragment: Fragment) {
     supportFragmentManager
         .beginTransaction().setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
         .replace(R.id.placeHolder, fragment).commit()
+}
+
+fun Fragment.checkPermission(string: String): Boolean {
+    return when(PackageManager.PERMISSION_GRANTED) {
+        ContextCompat.checkSelfPermission((activity as AppCompatActivity), string) -> true
+        else -> false
+    }
 }

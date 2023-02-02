@@ -12,6 +12,10 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+        val a = 10
+        val b = -10
+
+        assert(Integer.valueOf(a) === Integer.valueOf(a))
+        assert(Integer.valueOf(b) !== Integer.valueOf(b))
     }
 }
