@@ -11,6 +11,9 @@ fun Fragment.openFragment(fragment: Fragment) {
 }
 
 fun AppCompatActivity.openFragment(fragment: Fragment) {
+    if (supportFragmentManager.fragments.isNotEmpty()) {
+        if (supportFragmentManager.fragments[0].javaClass == fragment.javaClass) return
+    }
     supportFragmentManager
         .beginTransaction().setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
         .replace(R.id.placeHolder, fragment).commit()
