@@ -1,9 +1,12 @@
 package com.romanmikhailenko.gpstracker.fragments
 
 import android.content.Context
+import android.content.Intent
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.romanmikhailenko.gpstracker.BuildConfig
 import com.romanmikhailenko.gpstracker.databinding.FragmentMainBinding
+import com.romanmikhailenko.gpstracker.utils.DialogManager
 import com.romanmikhailenko.gpstracker.utils.checkPermission
 import org.osmdroid.config.Configuration
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
@@ -28,16 +32,25 @@ class MainFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         settingsOsm()
+        Log.d("MyLog", "onCreateView")
         binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("MyLog", "onViewCreated")
         registerPermission()
-        checkLocPermission()
-
     }
+
+    override fun onResume() {
+        super.onResume()
+        checkLocPermission()
+        Log.d("MyLog", "onResume")
+    }
+
+
 
     private fun settingsOsm() {
         Configuration.getInstance().load(
@@ -116,8 +129,16 @@ class MainFragment : Fragment() {
     private fun checkLocationEnabled() {
         val lManager = activity?.getSystemService((Context.LOCATION_SERVICE)) as LocationManager
         val isEnabled = lManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        if (!isEnabled) {
-            Toast.makeText(activity, "ne rabotaem...", Toast.LENGTH_LONG).show()
+        if (!isEnabled) { 
+            DialogManager.showLocEnableDialog(activity as AppCompatActivity,
+            object : DialogManager.Listener {
+                override fun onClick() {
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+
+            }
+
+            )
 
         }  else {
             Toast.makeText(activity, "rabotaem", Toast.LENGTH_LONG).show()
