@@ -16,15 +16,24 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
 import com.romanmikhailenko.gpstracker.BuildConfig
+import com.romanmikhailenko.gpstracker.R
 import com.romanmikhailenko.gpstracker.databinding.FragmentMainBinding
+import com.romanmikhailenko.gpstracker.location.LocationService
 import com.romanmikhailenko.gpstracker.utils.DialogManager
+import com.romanmikhailenko.gpstracker.utils.TimeUtils
 import com.romanmikhailenko.gpstracker.utils.checkPermission
 import org.osmdroid.config.Configuration
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.util.*
 
 class MainFragment : Fragment() {
+    private var isServiceRunning = false
+    private var timer: Timer? = null
+    private var startTime = 0L
+    private val timeData = MutableLiveData<String>()
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var binding: FragmentMainBinding
     override fun onCreateView(
@@ -42,6 +51,79 @@ class MainFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.d("MyLog", "onViewCreated")
         registerPermission()
+        setOnClicks()
+        checkServiceState()
+        updateTime()
+    }
+
+    private fun setOnClicks() = with(binding) {
+        val listener = onClicks()
+        fStartStop.setOnClickListener(listener)
+
+    }
+
+    private fun onClicks(): View.OnClickListener {
+        return View.OnClickListener {
+            when (it.id) {
+                R.id.fStartStop -> {
+                    startStopService()
+                }
+            }
+        }
+    }
+
+    private fun updateTime() {
+        timeData.observe(viewLifecycleOwner) {
+            binding.tvTime.text = it
+        }
+    }
+
+    private fun startTimer() {
+        timer?.cancel()
+        timer = Timer()
+        startTime = System.currentTimeMillis()
+        timer?.schedule(object : TimerTask() {
+            override fun run() {
+                activity?.runOnUiThread {
+                    timeData.value = getCurrentTime()
+                }
+            }
+
+        }, 1000, 1000)
+    }
+
+    private fun getCurrentTime() : String {
+        return "Time: ${TimeUtils.getTime(System.currentTimeMillis() - startTime)}"
+    }
+
+    private fun checkServiceState() {
+        isServiceRunning = LocationService.isRunning
+        if (isServiceRunning) {
+            binding.fStartStop.setImageResource(R.drawable.ic_baseline_stop_24)
+        }
+    }
+
+    private fun startStopService() {
+        if (!isServiceRunning) {
+            startLocService()
+        } else {
+            activity?.stopService(Intent(activity, LocationService::class.java))
+            binding.fStartStop.setImageResource(R.drawable.ic_baseline_play_arrow_24)
+            timer?.cancel()
+
+        }
+        isServiceRunning = !isServiceRunning
+    }
+
+    private fun startLocService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            activity?.startForegroundService(Intent(activity, LocationService::class.java))
+        } else {
+            activity?.startService(Intent(activity, LocationService::class.java))
+        }
+        binding.fStartStop.setImageResource(R.drawable.ic_baseline_stop_24)
+        startTimer()
+
     }
 
     override fun onResume() {
@@ -49,7 +131,6 @@ class MainFragment : Fragment() {
         checkLocPermission()
         Log.d("MyLog", "onResume")
     }
-
 
 
     private fun settingsOsm() {
@@ -112,10 +193,9 @@ class MainFragment : Fragment() {
     }
 
     private fun checkPermissionBefore10() {
-        if (checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION))
-         {
+        if (checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)) {
             initOsm()
-             checkLocationEnabled()
+            checkLocationEnabled()
         } else {
             pLauncher.launch(
                 arrayOf(
@@ -129,18 +209,18 @@ class MainFragment : Fragment() {
     private fun checkLocationEnabled() {
         val lManager = activity?.getSystemService((Context.LOCATION_SERVICE)) as LocationManager
         val isEnabled = lManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        if (!isEnabled) { 
+        if (!isEnabled) {
             DialogManager.showLocEnableDialog(activity as AppCompatActivity,
-            object : DialogManager.Listener {
-                override fun onClick() {
-                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                }
+                object : DialogManager.Listener {
+                    override fun onClick() {
+                        startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    }
 
-            }
+                }
 
             )
 
-        }  else {
+        } else {
             Toast.makeText(activity, "rabotaem", Toast.LENGTH_LONG).show()
 
         }
