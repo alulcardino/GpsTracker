@@ -14,16 +14,19 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import com.romanmikhailenko.gpstracker.MainActivity
 import com.romanmikhailenko.gpstracker.R
+import org.osmdroid.util.GeoPoint
 
 class LocationService : Service() {
     private var distance = 0.0f
     private val lastLocation: Location? = null
     private lateinit var locProvider: FusedLocationProviderClient
     private lateinit var locRequest: LocationRequest
+    private lateinit var geoPointList: ArrayList<GeoPoint>
     override fun onBind(p0: Intent?): IBinder? {
         return null
     }
@@ -37,6 +40,7 @@ class LocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        geoPointList = ArrayList()
         initLocation()
     }
 
@@ -50,15 +54,27 @@ class LocationService : Service() {
         override fun onLocationResult(locationResult: LocationResult) {
             super.onLocationResult(locationResult)
             val currentLocation = locationResult.lastLocation
-            if (lastLocation!= null && currentLocation != null) {
-                if(currentLocation.speed > 0.2) {
+            if (lastLocation != null && currentLocation != null) {
+                if (currentLocation.speed > 0.2) {
                     distance += lastLocation.distanceTo(currentLocation)
                 }
+                geoPointList.add(GeoPoint(currentLocation.latitude, currentLocation.longitude))
+                val locModel = LocationModel(
+                    currentLocation.speed,
+                    distance,
+                    geoPointList
+                )
+                sendLocData(locModel)
             }
 
-            Log.d("MyLog", "Distance: ${distance}")
 
         }
+    }
+
+    private fun sendLocData(locationModel: LocationModel) {
+        val intent = Intent(LOC_MODEL_INTENT)
+        intent.putExtra(LOC_MODEL_INTENT, locationModel)
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
     }
 
     private fun startNotification() {
@@ -116,6 +132,7 @@ class LocationService : Service() {
     }
 
     companion object {
+        const val LOC_MODEL_INTENT = "loc_intent"
         const val CHANNEL_ID = "channel_1"
         var isRunning = false
         var startTime = 0L

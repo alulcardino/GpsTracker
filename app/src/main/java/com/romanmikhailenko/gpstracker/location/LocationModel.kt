@@ -7,4 +7,4 @@ data class LocationModel(
     val distance: Float = 0.0f,
     val geoPointList: ArrayList<GeoPoint>
 
-)
+) : java.io.Serializable

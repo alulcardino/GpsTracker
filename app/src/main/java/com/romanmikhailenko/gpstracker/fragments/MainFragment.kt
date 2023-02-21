@@ -1,7 +1,9 @@
 package com.romanmikhailenko.gpstracker.fragments
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -17,9 +19,11 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.romanmikhailenko.gpstracker.BuildConfig
 import com.romanmikhailenko.gpstracker.R
 import com.romanmikhailenko.gpstracker.databinding.FragmentMainBinding
+import com.romanmikhailenko.gpstracker.location.LocationModel
 import com.romanmikhailenko.gpstracker.location.LocationService
 import com.romanmikhailenko.gpstracker.utils.DialogManager
 import com.romanmikhailenko.gpstracker.utils.TimeUtils
@@ -54,6 +58,7 @@ class MainFragment : Fragment() {
         setOnClicks()
         checkServiceState()
         updateTime()
+        registerLocationReceiver()
     }
 
     private fun setOnClicks() = with(binding) {
@@ -93,7 +98,7 @@ class MainFragment : Fragment() {
         }, 1, 1)
     }
 
-    private fun getCurrentTime() : String {
+    private fun getCurrentTime(): String {
         return "Time: ${TimeUtils.getTime(System.currentTimeMillis() - startTime)}"
     }
 
@@ -228,6 +233,22 @@ class MainFragment : Fragment() {
             Toast.makeText(activity, "rabotaem", Toast.LENGTH_LONG).show()
 
         }
+    }
+
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == LocationService.LOC_MODEL_INTENT) {
+                val locModel = intent.getSerializableExtra(LocationService.LOC_MODEL_INTENT) as LocationModel
+                Log.d("MyLog", "Distance: ${locModel}")
+
+            }
+        }
+
+    }
+
+    private fun registerLocationReceiver() {
+        val locationFilter = IntentFilter(LocationService.LOC_MODEL_INTENT)
+        LocalBroadcastManager.getInstance(activity as AppCompatActivity).registerReceiver(receiver, locationFilter)
     }
 
     companion object {
