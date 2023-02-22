@@ -23,7 +23,7 @@ import org.osmdroid.util.GeoPoint
 
 class LocationService : Service() {
     private var distance = 0.0f
-    private val lastLocation: Location? = null
+    private var lastLocation: Location? = null
     private lateinit var locProvider: FusedLocationProviderClient
     private lateinit var locRequest: LocationRequest
     private lateinit var geoPointList: ArrayList<GeoPoint>
@@ -51,14 +51,13 @@ class LocationService : Service() {
     }
 
     private val locCallBack = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            super.onLocationResult(locationResult)
-            val currentLocation = locationResult.lastLocation
+        override fun onLocationResult(lResult: LocationResult) {
+            super.onLocationResult(lResult)
+            val currentLocation = lResult.lastLocation
             if (lastLocation != null && currentLocation != null) {
-                if (currentLocation.speed > 0.2) {
-                    distance += lastLocation.distanceTo(currentLocation)
-                }
+                    distance += lastLocation?.distanceTo(currentLocation)!!
                 geoPointList.add(GeoPoint(currentLocation.latitude, currentLocation.longitude))
+
                 val locModel = LocationModel(
                     currentLocation.speed,
                     distance,
@@ -66,8 +65,7 @@ class LocationService : Service() {
                 )
                 sendLocData(locModel)
             }
-
-
+            lastLocation = currentLocation
         }
     }
 

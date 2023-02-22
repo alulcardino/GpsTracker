@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -18,9 +19,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.romanmikhailenko.gpstracker.BuildConfig
+import com.romanmikhailenko.gpstracker.MainViewModel
 import com.romanmikhailenko.gpstracker.R
 import com.romanmikhailenko.gpstracker.databinding.FragmentMainBinding
 import com.romanmikhailenko.gpstracker.location.LocationModel
@@ -29,17 +32,20 @@ import com.romanmikhailenko.gpstracker.utils.DialogManager
 import com.romanmikhailenko.gpstracker.utils.TimeUtils
 import com.romanmikhailenko.gpstracker.utils.checkPermission
 import org.osmdroid.config.Configuration
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
 
 class MainFragment : Fragment() {
+    private var polyline: Polyline? = null
     private var isServiceRunning = false
     private var timer: Timer? = null
     private var startTime = 0L
-    private val timeData = MutableLiveData<String>()
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var binding: FragmentMainBinding
+    private val model: MainViewModel by activityViewModels()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -53,12 +59,12 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d("MyLog", "onViewCreated")
         registerPermission()
         setOnClicks()
         checkServiceState()
         updateTime()
         registerLocationReceiver()
+        locationUpdates()
     }
 
     private fun setOnClicks() = with(binding) {
@@ -77,8 +83,26 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun updateTime() {
-        timeData.observe(viewLifecycleOwner) {
+    private fun locationUpdates() = with(binding){
+        model.locationUpdates.observe(viewLifecycleOwner){
+            Log.d("MyLog", "asdweq")
+
+            val distance = "Distance: ${String.format("%.1f", it.distance)} m"
+            val velocity = "Velocity: ${String.format("%.1f", 3.6f * it.velocity)} km/h"
+            val averageVelocity = "Average Velocity: ${getAverageSpeed(it.distance)} km/h"
+            tvDistance.text = distance
+            tvVelocity.text = velocity
+            tvAverage.text = averageVelocity
+        }
+    }
+
+    private fun getAverageSpeed(distance: Float): String {
+        return String.format("%.1f", 3.6f * (distance / ((System.currentTimeMillis() - startTime) / 1000.0f)))
+    }
+
+
+    private fun updateTime(){
+        model.timeData.observe(viewLifecycleOwner){
             binding.tvTime.text = it
         }
     }
@@ -91,7 +115,7 @@ class MainFragment : Fragment() {
         timer?.schedule(object : TimerTask() {
             override fun run() {
                 activity?.runOnUiThread {
-                    timeData.value = getCurrentTime()
+                    model.timeData.value = getCurrentTime()
                 }
             }
 
@@ -138,7 +162,6 @@ class MainFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         checkLocPermission()
-        Log.d("MyLog", "onResume")
     }
 
 
@@ -151,6 +174,8 @@ class MainFragment : Fragment() {
     }
 
     private fun initOsm() = with(binding) {
+        polyline = Polyline()
+        polyline?.color = Color.BLUE
         map.controller.setZoom(20.0)
         val mLocProvider = GpsMyLocationProvider(activity)
         val myLocOverlay = MyLocationNewOverlay(mLocProvider, map)
@@ -159,6 +184,7 @@ class MainFragment : Fragment() {
         myLocOverlay.runOnFirstFix {
             map.overlays.clear()
             map.overlays.add(myLocOverlay)
+            map.overlays.add(polyline)
         }
     }
 
@@ -239,8 +265,7 @@ class MainFragment : Fragment() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == LocationService.LOC_MODEL_INTENT) {
                 val locModel = intent.getSerializableExtra(LocationService.LOC_MODEL_INTENT) as LocationModel
-                Log.d("MyLog", "Distance: ${locModel}")
-
+                 model.locationUpdates.value = locModel
             }
         }
 
@@ -251,6 +276,16 @@ class MainFragment : Fragment() {
         LocalBroadcastManager.getInstance(activity as AppCompatActivity).registerReceiver(receiver, locationFilter)
     }
 
+
+    private fun addPoints(list: List<GeoPoint>) {
+        polyline?.addPoint(list[list.size - 1])
+    }
+
+    private fun fillPolyline(list: List<GeoPoint>) {
+        list.forEach {
+            polyline?.addPoint(it)
+        }
+    }
     companion object {
         fun newInstance() =
             MainFragment()
