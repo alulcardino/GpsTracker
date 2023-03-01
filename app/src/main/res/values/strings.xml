@@ -11,8 +11,10 @@
     <string name="track_color_summary">Choose track color</string>
     <string name="location_disabled">Location Disabled</string>
     <string name="location_message">Do you want enable GPS </string>
-
-
+    <string name="save_this_track">Save this Track?</string>
+    <string name="time">Time:</string>
+    <string name="velocity">Velocity:</string>
+    <string name="distance">Distance:</string>
 
 
 </resources>

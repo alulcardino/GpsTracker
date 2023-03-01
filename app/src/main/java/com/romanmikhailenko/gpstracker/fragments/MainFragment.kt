@@ -43,6 +43,7 @@ class MainFragment : Fragment() {
     private var isServiceRunning = false
     private var timer: Timer? = null
     private var startTime = 0L
+    private var firstStart = true
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var binding: FragmentMainBinding
     private val model: MainViewModel by activityViewModels()
@@ -93,6 +94,7 @@ class MainFragment : Fragment() {
             tvDistance.text = distance
             tvVelocity.text = velocity
             tvAverage.text = averageVelocity
+            updatePolyline(it.geoPointList)
         }
     }
 
@@ -277,7 +279,7 @@ class MainFragment : Fragment() {
     }
 
 
-    private fun addPoints(list: List<GeoPoint>) {
+    private fun addPoint(list: List<GeoPoint>) {
         polyline?.addPoint(list[list.size - 1])
     }
 
@@ -285,6 +287,21 @@ class MainFragment : Fragment() {
         list.forEach {
             polyline?.addPoint(it)
         }
+    }
+
+    private fun updatePolyline(list: List<GeoPoint>) {
+        if (list.size > 1 && firstStart) {
+            fillPolyline(list)
+            firstStart = false
+        } else {
+            addPoint(list)
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        LocalBroadcastManager.getInstance(activity as AppCompatActivity).unregisterReceiver(receiver)
+
     }
     companion object {
         fun newInstance() =

@@ -55,9 +55,10 @@ class LocationService : Service() {
             super.onLocationResult(lResult)
             val currentLocation = lResult.lastLocation
             if (lastLocation != null && currentLocation != null) {
+                if (currentLocation.speed > 0.4) {
                     distance += lastLocation?.distanceTo(currentLocation)!!
-                geoPointList.add(GeoPoint(currentLocation.latitude, currentLocation.longitude))
-
+                    geoPointList.add(GeoPoint(currentLocation.latitude, currentLocation.longitude))
+                }
                 val locModel = LocationModel(
                     currentLocation.speed,
                     distance,
