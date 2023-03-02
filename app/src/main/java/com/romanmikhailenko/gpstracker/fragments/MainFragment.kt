@@ -144,7 +144,12 @@ class MainFragment : Fragment() {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_baseline_play_arrow_24)
             timer?.cancel()
+            DialogManager.showSaveDialog(requireContext(), object : DialogManager.Listener {
+                override fun onClick() {
 
+                }
+
+            })
         }
         isServiceRunning = !isServiceRunning
     }
