@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import com.romanmikhailenko.gpstracker.R
 import com.romanmikhailenko.gpstracker.databinding.SaveDialogBinding
+import com.romanmikhailenko.gpstracker.db.TrackItem
 
 object DialogManager {
     fun showLocEnableDialog(context: Context, listener: Listener) {
@@ -24,12 +25,16 @@ object DialogManager {
         dialog.show()
     }
 
-    fun showSaveDialog(context: Context, listener: Listener) {
+    fun showSaveDialog(context: Context, item: TrackItem?, listener: Listener) {
         val builder = AlertDialog.Builder(context)
         val binding = SaveDialogBinding.inflate(LayoutInflater.from(context), null, false)
         builder.setView(binding.root)
         val dialog = builder.create()
         binding.apply {
+            tvTime.text = item?.time
+            tvVelocity.text = item?.velocity
+            tvDistance.text = item?.distance
+
             btnSave.setOnClickListener {
                 listener.onClick()
                 dialog.dismiss()
@@ -39,7 +44,7 @@ object DialogManager {
                 dialog.dismiss()
             }
         }
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT ))
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.show()
 
     }

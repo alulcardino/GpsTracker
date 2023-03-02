@@ -26,6 +26,7 @@ import com.romanmikhailenko.gpstracker.BuildConfig
 import com.romanmikhailenko.gpstracker.MainViewModel
 import com.romanmikhailenko.gpstracker.R
 import com.romanmikhailenko.gpstracker.databinding.FragmentMainBinding
+import com.romanmikhailenko.gpstracker.db.TrackItem
 import com.romanmikhailenko.gpstracker.location.LocationModel
 import com.romanmikhailenko.gpstracker.location.LocationService
 import com.romanmikhailenko.gpstracker.utils.DialogManager
@@ -39,6 +40,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
 
 class MainFragment : Fragment() {
+    private var trackItem: TrackItem? = null
     private var polyline: Polyline? = null
     private var isServiceRunning = false
     private var timer: Timer? = null
@@ -95,6 +97,13 @@ class MainFragment : Fragment() {
             tvVelocity.text = velocity
             tvAverage.text = averageVelocity
             updatePolyline(it.geoPointList)
+            trackItem = TrackItem(
+                null,
+                getCurrentTime(),
+                TimeUtils.getDate(),
+                distance,
+                averageVelocity,
+            )
         }
     }
 
@@ -144,7 +153,9 @@ class MainFragment : Fragment() {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_baseline_play_arrow_24)
             timer?.cancel()
-            DialogManager.showSaveDialog(requireContext(), object : DialogManager.Listener {
+            DialogManager.showSaveDialog(requireContext(),
+                trackItem,
+                object : DialogManager.Listener {
                 override fun onClick() {
 
                 }
